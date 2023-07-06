@@ -1,0 +1,191 @@
+---
+title:
+author:
+date:
+output:
+  html_document: default
+  pdf_document: default
+---
+
+# Introducción
+
+El siguiente es un caso de estudio elaborado sobre datos de la actividad "Dr. Semmelweis and the Discovery of Handwashing", proporcionado por Datacamp y disponible en el siguiente [enlace](https://www.kaggle.com/datasets/arijit75/survey-data).
+
+Los datos fueron registrados entre enero de 1841 y marzo de 1846 por el doctor Ignaz Semmelweis y registran el impacto del lavado de manos en la incidencia de la sepsis puerperal, más conocida como fiebre del parto.
+
+El Dr. Semmelweis es considerado como el creador de los métodos antisépticos, mucho antes de que se tenga consciencia de la existencia de microorganismos.
+
+# Conociendo el caso
+
+A principios de la década del 40 del siglo XIX, al menos el 10% de las mujeres fallecían por sepsis puerperal luego de dar a luz. En este momento el doctor Ignaz Semmelweis sostiene que la causa radica en la falta de higiene de los médicos durante el trabajo de parto, pero lamentablemente nadie lo escucha.
+
+En este re-análisis, previamente hecho por el Dr. Semmelweis en su momento, veremos los datos que lo hicieron darse cuenta de que algo no estaba bien en el Hospital General de Viena.
+
+## 1. Preparando el entorno
+
+Para el siguiente proceso, utilizaremos el paquete 'tidyverse'.
+
+```{r Carga de librería}
+library(tidyverse)
+```
+
+Y utilizaremos el set de datos disponible, almacenándolo en una variable.
+
+```{r Carga del set de datos}
+anual_df <- read.csv("yearly_deaths_by_clinic.csv")
+```
+
+Seguidamente, usaremos la función 'print()' para comenzar a explorar los datos.
+
+```{r Impresión del set de datos}
+print(anual_df)
+```
+
+Para mayor facilidad de lectura, renombramos las columnas en castellano:
+
+```{r Renombrando el set de datos con los títulos en castellano}
+anual_df <- anual_df %>%
+  rename(año = year, nacimientos = births, muertes = deaths, clinica = clinic)
+```
+
+Inspeccionamos la tabla nuevamente
+
+```{r Impresión del set de datos anuales renombrado}
+print(anual_df)
+```
+
+
+## 2. El alarmante número de muertes
+
+La tabla de arriba muestra el número de mujeres dando a luz en las dos clínicas del Hospital General de Viena para el período entre 1841 y 1846.
+
+Como se puede observar, dar a luz era en efecto, una tarea peligrosa. Por esos días se registraba un alarmante número de fallecimientos a causa de la fiebre puerperina.
+
+Si miramos la proporción de muertes en relación a los nacimientos veremos la situación con un poco más de claridad.
+
+Haremos ahora una columna adicional para este cálculo.
+
+```{r Obtención de la tasa de mortalidad y adición de la columna a la variable}
+anual_df <- anual_df %>%
+  mutate(proporcion_muertes = muertes/nacimientos)
+```
+
+Llamamos a la función 'print()' para que nos devuelva la tabla actualizada con la nueva variable.
+
+```{r Impresión de la nueva tabla anual con tasa de mortalidad}
+print(anual_df)
+```
+
+## 3. Muerte en las clínicas
+
+Si graficamos la proporción de muertes, notaremos un curioso patrón.
+
+```{r Gráfica de mortalidad}
+ggplot(anual_df,aes(x=año,y=proporcion_muertes,color=clinica)) +
+  geom_line()
+```
+
+
+## 4. El comienzo de la higiene de manos
+
+¿Por qué la proporción de muertes es mayor en la clínica 1? Semmelweis vio el patrón y se sintió perturbado. La única diferencia entre ambas clinicas era que en la Clinica 2 los trabajos de parto eran efectuados mayoritariamente por parteras estudiantes, mientras que en la clinica 1 el mismo trabajo era realizado por estudiantes de medicina que además, también hacían entre otras cosas trabajos de autopsia en la morgue del hospital.
+
+La sospecha de Semmelweis era que algo de los cadáveres se propagaba mediante las manos de los estudiantes y causaba la fiebre de parto. En un intento desesperado por bajar las altas tasas de mortalidad, decretó en 1847 el lavado de manos obligatorio. Una medida que, en ese entonces era por demás de controversial, en un momento y lugar de la historia donde nadie conocía la existencia de microorganismos.
+
+Posteriormente a la implementación de la obligatoriedad del lavado de manos, se llevó un registro mensual de mortalidad el cual se puede leer en el siguiente set de datos que cargamos a continuación:
+
+```{r Carga de set de datos y creación del data frame}
+mensual_df <- read.csv("monthly_deaths.csv")
+```
+
+```{r Impresión del data frame creado}
+print(mensual_df)
+```
+
+Al igual que con el data frame anual, renombraremos las columnas para mejor lectura:
+
+```{r Renombrando las columnas de la tabla mensual}
+mensual_df <- mensual_df %>%
+  rename(
+    fecha = date,
+    nacimientos = births,
+    muertes = deaths,
+  )
+```
+
+```{r Visualizando la tabla}
+print(mensual_df)
+```
+
+Por último, calcularemos la tasa de mortalidad.
+
+```{r Mortalidad mensual, con redondeo}
+mensual_df <- mensual_df %>%
+  mutate(mortalidad = round((muertes/nacimientos), digits = 3))
+```
+
+
+```{r Visualizando la tabla con la nueva columna de mortalidad}
+print(mensual_df)
+```
+
+
+## 5. El efecto del lavado de manos
+
+Con los datos cargados, podemos hacer una observación gráfica de cómo la tasa de mortalidad por parto se vio afectada en la clínica 1 gracias a la obligatoriedad del lavado de manos, a partir de 1846.
+
+```{r Gráfica de la proporción mensual de muertes}
+ggplot(mensual_df, aes(x=fecha,y=mortalidad, group=1)) + geom_line()
+```
+
+
+## 6. Resaltando el efecto del lavado de manos
+
+A partir del verano de 1847, la proporción de muertes se redujo drásticamente, luego de que el Dr. Semmelweis implementara el lavado de manos como medida obligatoria.
+
+Podemos resaltar el resultado aun más haciendo lo siguiente:
+
+```{r}
+inicio_lavado = ('1847-06-01') # Fecha de inicio del lavado de manos obligatorio
+mensual_df <- mensual_df %>% mutate(lavado_iniciado = fecha >= inicio_lavado) # Agregamos un TRUE/FALSE a la nueva columna de 'lavado_iniciado'
+ggplot(mensual_df, aes(x=fecha,y=mortalidad, group=1, color=lavado_iniciado)) + geom_line()
+```
+
+
+## 7. ¿Más lavado de manos, menos muertes?
+
+La gráfica muestra como la mortalidad bajó drásticamente a partir de la obligatoriedad del lavado de manos. Ahora veremos como impactó a la mortalidad en datos.
+
+```{r}
+res_mensual <- mensual_df %>%
+  group_by(lavado_iniciado) %>%
+  summarise(mortalidad_media = mean(mortalidad))
+```
+
+```{r}
+print(res_mensual)
+```
+
+## 8. Un análisis estadístico de los datos de lavado de manos de Semmelweis
+
+Según lo obtenido, el lavado de manos redujo la proporción de muertes en un 8%, lo cual es mucho incluso para estándares actuales. Para tener una mejor idea, podemos obtener el intervalo de confianza de esta de medición de la siguiente manera:
+
+```{r}
+prueba_c <- t.test(mortalidad ~ lavado_iniciado, data = mensual_df)
+```
+
+```{r}
+prueba_c
+```
+
+## 9. El destino del Dr. Semmelweis
+
+La interpretación del cálculo anterior nos dice que, según un intervalo de confianza de 95%, que los doctores no se laven las manos incrementa la proporción de muertes entre un 6.7 y un 10 porciento. Al parecer, el Dr. Semmelweis tenía evidencia estadística sólida para sustentar sus medidas.
+
+La tragedia, sin embargo, es que a pesar de la evidencia, la teoría original de Semmelweis de que algún tipo de sustancia (lo que hoy conocemos como bacterias) proveniente de la sala de autopsias era la responsable de la fiebre puerperina fue ridiculizada por los científicos contemporáneos.
+
+La comunidad médica en general rechazó en gran medida su descubrimiento, y en 1849 fue despedido del Hospital General de Viena.
+
+En ese entonces, la estadística como argumento científico no era común en la ciencia médica. Semmelweis publicó sus datos como largas tablas de datos en crudo, pero no mostró gráficos ni intervalos de confianza.
+
+De haber tenido acceso al análisis realizado, quizás hubiese tenido éxito en lograr que los médicos vieneses se lavaran las manos.
